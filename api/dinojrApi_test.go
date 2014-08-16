@@ -1,6 +1,7 @@
 package api
 
 import (
+	"../clients"
 	"encoding/json"
 	twilio "github.com/carlosdp/twiliogo"
 	"github.com/gorilla/mux"
@@ -16,7 +17,8 @@ var (
 	//basics setup
 	rtr    = mux.NewRouter()
 	tc     = new(twilio.MockClient)
-	dinojr = InitApi(FAKE_CONFIG, tc)
+	mp     = clients.NewMockClient()
+	dinojr = InitApi(FAKE_CONFIG, tc, mp)
 	//mocked twilio msg
 	testMessage = twilio.Message{
 		Sid:         "testsid",
@@ -93,6 +95,7 @@ func TestLoadMsgs_StatusOK(t *testing.T) {
 	if response.Code != http.StatusCreated {
 		t.Fatalf("Non-expected status [%v]  expected [%v]", response.Code, http.StatusCreated)
 	}
+
 }
 
 func TestLoadMsgs_StatusBadRequest_NoUserIdParam(t *testing.T) {

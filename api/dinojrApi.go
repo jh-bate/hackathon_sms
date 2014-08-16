@@ -1,6 +1,7 @@
 package api
 
 import (
+	"../clients"
 	twilio "github.com/carlosdp/twiliogo"
 	"github.com/gorilla/mux"
 	"log"
@@ -9,8 +10,9 @@ import (
 
 type (
 	Api struct {
-		config Config
-		client twilio.Client
+		config    Config
+		smsClient twilio.Client
+		platform  clients.PlatformClient
 	}
 
 	Config struct {
@@ -22,11 +24,12 @@ type (
 	varsHandler func(http.ResponseWriter, *http.Request, map[string]string)
 )
 
-func InitApi(cfg Config, tc twilio.Client) *Api {
+func InitApi(cfg Config, tc twilio.Client, pc clients.PlatformClient) *Api {
 
 	return &Api{
-		config: cfg,
-		client: tc,
+		config:    cfg,
+		smsClient: tc,
+		platform:  pc,
 	}
 }
 
@@ -41,15 +44,12 @@ func (h varsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	h(res, req, vars)
 }
 
-func (a *Api) insertMessages(messages interface{}) {
-
-}
-
+//Send a message via twillo to the user
 func (a *Api) SendMsg(res http.ResponseWriter, req *http.Request, vars map[string]string) {
 
 	if vars["userid"] != "" {
 
-		message, err := twilio.NewMessage(a.client, "6666666666", "5555555555", twilio.Body("TestBody"))
+		message, err := twilio.NewMessage(a.smsClient, "6666666666", "5555555555", twilio.Body("TestBody"))
 
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -64,18 +64,24 @@ func (a *Api) SendMsg(res http.ResponseWriter, req *http.Request, vars map[strin
 	return
 }
 
+//Load message from twilio and then add them push them into the platform
 func (a *Api) LoadMsgs(res http.ResponseWriter, req *http.Request, vars map[string]string) {
 
 	if vars["userid"] != "" {
 
-		messages, err := twilio.GetMessageList(a.client)
+		messages, err := twilio.GetMessageList(a.smsClient)
 
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		} else {
-			log.Printf("yay loaded!! %v ", messages)
-			res.WriteHeader(http.StatusCreated)
+			log.Printf("yay got messages !! %v ", messages)
+			if err := a.platform.LoadInto(messages); err == nil {
+				log.Printf("yay loaded messages !! %v ", messages)
+				res.WriteHeader(http.StatusCreated)
+				return
+			}
+			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
@@ -84,7 +90,6 @@ func (a *Api) LoadMsgs(res http.ResponseWriter, req *http.Request, vars map[stri
 }
 
 func (a *Api) CalcBolus(res http.ResponseWriter, req *http.Request, vars map[string]string) {
-
 	res.WriteHeader(http.StatusOK)
 	return
 }
