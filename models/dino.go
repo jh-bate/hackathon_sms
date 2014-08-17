@@ -72,7 +72,8 @@ outer:
 }
 
 func makeBg(bgString string) *BgEvent {
-	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr"}, Units: "", Value: ""}
+	bg := strings.Split(bgString, BG)
+	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr"}, Units: "", Value: bg[1]}
 }
 
 func makeNote(noteString string) *Common {
@@ -80,14 +81,16 @@ func makeNote(noteString string) *Common {
 }
 
 func makeCarb(carbString string) *FoodEvent {
-	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr"}, Carbs: ""}
+	carb := strings.Split(carbString, CARB)
+	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr"}, Carbs: carb[1]}
 }
 
 func makeBolus(bolusString string) *BolusEvent {
-	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr"}, SubType: "injected", Value: ""}
+	bolus := strings.Split(bolusString, BOLUS)
+	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr"}, SubType: "injected", Value: bolus[1]}
 }
 
 func makeBasal(basalString string) *BasalEvent {
-	//"deliveryType": "injected",
-	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr"}, DeliveryType: "injected", Value: ""}
+	basal := strings.Split(basalString, BASAL)
+	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr"}, DeliveryType: "injected", Value: basal[1]}
 }
