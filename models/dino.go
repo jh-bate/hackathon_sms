@@ -42,7 +42,7 @@ const (
 	BOLUS = "LA="
 )
 
-func Translate(smsString string) []interface{} {
+func Translate(smsString string, date string) []interface{} {
 
 	var events []interface{}
 
@@ -52,45 +52,45 @@ outer:
 	for i := range raw {
 		switch {
 		case strings.Index(raw[i], BG) != -1:
-			events = append(events, makeBg(raw[i]))
+			events = append(events, makeBg(raw[i], date))
 			break
 		case strings.Index(raw[i], CARB) != -1:
-			events = append(events, makeCarb(raw[i]))
+			events = append(events, makeCarb(raw[i], date))
 			break
 		case strings.Index(raw[i], BASAL) != -1:
-			events = append(events, makeBasal(raw[i]))
+			events = append(events, makeBasal(raw[i], date))
 			break
 		case strings.Index(raw[i], BOLUS) != -1:
-			events = append(events, makeBolus(raw[i]))
+			events = append(events, makeBolus(raw[i], date))
 			break
 		default:
-			events = append(events, makeNote(smsString))
+			events = append(events, makeNote(smsString, date))
 			break outer
 		}
 	}
 	return events
 }
 
-func makeBg(bgString string) *BgEvent {
+func makeBg(bgString, date string) *BgEvent {
 	bg := strings.Split(bgString, BG)
-	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr"}, Units: "", Value: bg[1]}
+	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr", Time: date}, Units: "", Value: bg[1]}
 }
 
-func makeNote(noteString string) *Common {
-	return &Common{Type: "note", Source: "dinojr"}
+func makeNote(noteString, date string) *Common {
+	return &Common{Type: "note", Source: "dinojr", Time: date}
 }
 
-func makeCarb(carbString string) *FoodEvent {
+func makeCarb(carbString, date string) *FoodEvent {
 	carb := strings.Split(carbString, CARB)
-	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr"}, Carbs: carb[1]}
+	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr", Time: date}, Carbs: carb[1]}
 }
 
-func makeBolus(bolusString string) *BolusEvent {
+func makeBolus(bolusString, date string) *BolusEvent {
 	bolus := strings.Split(bolusString, BOLUS)
-	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr"}, SubType: "injected", Value: bolus[1]}
+	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr", Time: date}, SubType: "injected", Value: bolus[1]}
 }
 
-func makeBasal(basalString string) *BasalEvent {
+func makeBasal(basalString, date string) *BasalEvent {
 	basal := strings.Split(basalString, BASAL)
-	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr"}, DeliveryType: "injected", Value: basal[1]}
+	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr", Time: date}, DeliveryType: "injected", Value: basal[1]}
 }
