@@ -14,7 +14,7 @@ import (
 type (
 	//generic interface
 	PlatformClient interface {
-		LoadInto(userid string, data interface{}) error
+		LoadInto(userid string, data *twilio.MessageList) error
 		LoadFrom(userid string) (interface{}, error)
 	}
 	TidepoolClient struct {
@@ -42,7 +42,7 @@ func (tc *TidepoolClient) loadBlock(block []byte) (int, error) {
 
 }
 
-func (tc *TidepoolClient) LoadInto(userid string, data twilio.MessageList) error {
+func (tc *TidepoolClient) LoadInto(userid string, data *twilio.MessageList) error {
 
 	for i := range data.Messages {
 		message := data.Messages[i]

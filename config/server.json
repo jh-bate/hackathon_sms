@@ -1,6 +1,6 @@
 {
   "service": {
-    "service": "user-api-local",
+    "service": "dinojr-local",
     "protocol": "http",
     "host": "localhost:9110",
     "keyFile": "config/key.pem",
@@ -8,7 +8,6 @@
   },
   "dinojr" : {
     "twilioAccountSid" : "ADihSEI7tOQQP9xfXMO9HfRpXKu1NpIJ",
-    "twilioAuthToken" : "ADihSEI7tOQQP9xfXMO9HfRpXKu1NpIJ",
-    "userph" : ""
-  },
+    "twilioAuthToken" : "ADihSEI7tOQQP9xfXMO9HfRpXKu1NpIJ"
+  }
 }
