@@ -1,18 +1,37 @@
 package models
 
 import (
-	"log"
 	"strings"
 )
 
 type (
-	Event struct {
+	Common struct {
 		Type     string `json:"type"`
 		DeviceId string `json:"deviceId"`
 		Source   string `json:"source"`
-		TZOffset string `json:"timezoneOffset"`
-		Units    string `json:"units"`
-		Value    string `json:"value"`
+		Time     string `json:"time"`
+	}
+
+	BgEvent struct {
+		Common
+		Units string `json:"units"`
+		Value string `json:"value"`
+	}
+
+	FoodEvent struct {
+		Common
+		Carbs string `json:"carbs"`
+	}
+
+	BasalEvent struct {
+		Common
+		DeliveryType string `json:"deliveryType"`
+		Value        string `json:"value"`
+	}
+	BolusEvent struct {
+		Common
+		SubType string `json:"subType"`
+		Value   string `json:"value"`
 	}
 )
 
@@ -23,13 +42,11 @@ const (
 	BOLUS = "LA="
 )
 
-func Translate(smsString string) []*Event {
+func Translate(smsString string) []interface{} {
 
-	var events []*Event
+	var events []interface{}
 
 	raw := strings.Split(smsString, " ")
-
-	log.Printf("split as %v ", raw[0])
 
 outer:
 	for i := range raw {
@@ -54,22 +71,23 @@ outer:
 	return events
 }
 
-func makeBg(bgString string) *Event {
-	return &Event{Type: "", Source: "", Units: "", Value: ""}
+func makeBg(bgString string) *BgEvent {
+	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr"}, Units: "", Value: ""}
 }
 
-func makeNote(noteString string) *Event {
-	return &Event{Type: "", Source: "", Units: "", Value: ""}
+func makeNote(noteString string) *Common {
+	return &Common{Type: "note", Source: "dinojr"}
 }
 
-func makeCarb(carbString string) *Event {
-	return &Event{Type: "", Source: "", Units: "", Value: ""}
+func makeCarb(carbString string) *FoodEvent {
+	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr"}, Carbs: ""}
 }
 
-func makeBolus(bolusString string) *Event {
-	return &Event{Type: "", Source: "", Units: "", Value: ""}
+func makeBolus(bolusString string) *BolusEvent {
+	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr"}, SubType: "injected", Value: ""}
 }
 
-func makeBasal(basalString string) *Event {
-	return &Event{Type: "", Source: "", Units: "", Value: ""}
+func makeBasal(basalString string) *BasalEvent {
+	//"deliveryType": "injected",
+	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr"}, DeliveryType: "injected", Value: ""}
 }
