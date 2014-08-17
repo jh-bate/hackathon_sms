@@ -7,7 +7,7 @@ func NewMockClient() *MockClient {
 	return &MockClient{}
 }
 
-func (mc *MockClient) LoadInto(data interface{}) error {
+func (mc *MockClient) LoadInto(userid string, data interface{}) error {
 	return nil
 }
 

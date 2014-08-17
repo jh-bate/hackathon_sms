@@ -69,15 +69,17 @@ func (a *Api) LoadMsgs(res http.ResponseWriter, req *http.Request, vars map[stri
 
 	if vars["userid"] != "" {
 
+		userid := vars["userid"]
+
 		messages, err := twilio.GetMessageList(a.smsClient)
 
 		if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		} else {
-			log.Printf("yay got messages !! %v ", messages)
-			if err := a.platform.LoadInto(messages); err == nil {
-				log.Printf("yay loaded messages !! %v ", messages)
+			log.Printf("yay got messages for %s !! %v ", userid, messages)
+			if err := a.platform.LoadInto(userid, messages); err == nil {
+				log.Printf("yay loaded messages %s !! %v ", userid, messages)
 				res.WriteHeader(http.StatusCreated)
 				return
 			}

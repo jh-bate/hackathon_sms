@@ -2,6 +2,7 @@ package main
 
 import (
 	"./api"
+	djrClients "./clients"
 	twilio "github.com/carlosdp/twiliogo"
 	"github.com/gorilla/mux"
 	"github.com/tidepool-org/go-common"
@@ -43,17 +44,17 @@ func main() {
 	defer hakkenClient.Close()
 
 	/*
-	 * Twilio client
+	 * Clients
 	 */
 
 	tc := twilio.NewClient(config.Api.TwilioAccountSid, config.Api.TwilioAuthToken)
+	pc := djrClients.NewPlatformClient()
 
 	/*
 	 * Shoreline setup
 	 */
-
 	rtr := mux.NewRouter()
-	api := api.InitApi(config.Api, tc)
+	api := api.InitApi(config.Api, tc, pc)
 	api.SetHandlers("", rtr)
 
 	/*
