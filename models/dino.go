@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -14,24 +15,31 @@ type (
 
 	BgEvent struct {
 		Common
-		Units string `json:"units"`
-		Value string `json:"value"`
+		Value float64 `json:"value"`
 	}
 
 	FoodEvent struct {
 		Common
-		Carbs string `json:"carbs"`
+		Carbs float64 `json:"carbs"`
 	}
 
 	BasalEvent struct {
 		Common
-		DeliveryType string `json:"deliveryType"`
-		Value        string `json:"value"`
+		DeliveryType string  `json:"deliveryType"`
+		Value        float64 `json:"value"`
+		Duration     int     `json:"duration"`
+		Insulin      string  `json:"insulin"`
 	}
 	BolusEvent struct {
 		Common
-		SubType string `json:"subType"`
-		Value   string `json:"value"`
+		SubType string  `json:"subType"`
+		Value   float64 `json:"value"`
+		Insulin string  `json:"insulin"`
+	}
+	NoteEvent struct {
+		Common
+		CreatorId string `json:"creatorId"`
+		Text      string `json:"text"`
 	}
 )
 
@@ -40,9 +48,11 @@ const (
 	CARB  = "CHO="
 	BASAL = "SA="
 	BOLUS = "LA="
+	NOTE  = "NB="
+	MMOLL = "mmol/L"
 )
 
-func Translate(smsString string, date string) []interface{} {
+func Translate(smsString string, date, device string) []interface{} {
 
 	var events []interface{}
 
@@ -52,45 +62,49 @@ outer:
 	for i := range raw {
 		switch {
 		case strings.Index(raw[i], BG) != -1:
-			events = append(events, makeBg(raw[i], date))
+			events = append(events, makeBg(raw[i], date, device))
 			break
 		case strings.Index(raw[i], CARB) != -1:
-			events = append(events, makeCarb(raw[i], date))
+			events = append(events, makeCarb(raw[i], date, device))
 			break
 		case strings.Index(raw[i], BASAL) != -1:
-			events = append(events, makeBasal(raw[i], date))
+			events = append(events, makeBasal(raw[i], date, device))
 			break
 		case strings.Index(raw[i], BOLUS) != -1:
-			events = append(events, makeBolus(raw[i], date))
+			events = append(events, makeBolus(raw[i], date, device))
 			break
 		default:
-			events = append(events, makeNote(smsString, date))
+			events = append(events, makeNote(smsString, date, device))
 			break outer
 		}
 	}
 	return events
 }
 
-func makeBg(bgString, date string) *BgEvent {
+func makeBg(bgString, date, device string) *BgEvent {
 	bg := strings.Split(bgString, BG)
-	return &BgEvent{Common: Common{Type: "smbg", Source: "dinojr", Time: date}, Units: "", Value: bg[1]}
+	bgVal, _ := strconv.ParseFloat(bg[1], 64)
+	return &BgEvent{Common: Common{Type: "smbg", DeviceId: device, Source: "dinojr", Time: date}, Value: bgVal}
 }
 
-func makeNote(noteString, date string) *Common {
-	return &Common{Type: "note", Source: "dinojr", Time: date}
+func makeNote(noteString, date, device string) *Common {
+	return &Common{Type: "note", Source: "dinojr", DeviceId: device, Time: date}
 }
 
-func makeCarb(carbString, date string) *FoodEvent {
+func makeCarb(carbString, date, device string) *FoodEvent {
 	carb := strings.Split(carbString, CARB)
-	return &FoodEvent{Common: Common{Type: "food", Source: "dinojr", Time: date}, Carbs: carb[1]}
+	carbVal, _ := strconv.ParseFloat(carb[1], 64)
+	return &FoodEvent{Common: Common{Type: "food", DeviceId: device, Source: "dinojr", Time: date}, Carbs: carbVal}
 }
 
-func makeBolus(bolusString, date string) *BolusEvent {
+func makeBolus(bolusString, date, device string) *BolusEvent {
 	bolus := strings.Split(bolusString, BOLUS)
-	return &BolusEvent{Common: Common{Type: "bolus", Source: "dinojr", Time: date}, SubType: "injected", Value: bolus[1]}
+	bolusVal, _ := strconv.ParseFloat(bolus[1], 64)
+	return &BolusEvent{Common: Common{Type: "bolus", DeviceId: device, Source: "dinojr", Time: date}, SubType: "injected", Value: bolusVal, Insulin: "novolog"}
 }
 
-func makeBasal(basalString, date string) *BasalEvent {
+func makeBasal(basalString, date, device string) *BasalEvent {
 	basal := strings.Split(basalString, BASAL)
-	return &BasalEvent{Common: Common{Type: "basal", Source: "dinojr", Time: date}, DeliveryType: "injected", Value: basal[1]}
+	basalVal, _ := strconv.ParseFloat(basal[1], 64)
+	return &BasalEvent{Common: Common{Type: "basal", DeviceId: device, Source: "dinojr", Time: date}, DeliveryType: "injected", Value: basalVal, Insulin: "lantus", Duration: 86400000}
 }

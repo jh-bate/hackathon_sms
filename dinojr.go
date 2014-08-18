@@ -1,98 +1,95 @@
 package main
 
 import (
-	"./api"
-	djrClients "./clients"
+	"./clients"
+	"encoding/json"
 	twilio "github.com/carlosdp/twiliogo"
-	"github.com/gorilla/mux"
-	"github.com/tidepool-org/go-common"
-	"github.com/tidepool-org/go-common/clients"
-	"github.com/tidepool-org/go-common/clients/disc"
-	"github.com/tidepool-org/go-common/clients/hakken"
+	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"net/url"
+	"time"
 )
 
 type (
+	UserConfig struct {
+		AccountSid string `json:"accountSid"`
+		AuthToken  string `json:"authToken"`
+		User       string `json:"user"`
+		Pw         string `json:"pw"`
+	}
+
 	Config struct {
-		clients.Config
-		Service disc.ServiceListing `json:"service"`
-		Api     api.Config          `json:"dinojr"`
+		Platform *clients.Config `json:"platform"`
+		User     UserConfig      `json:"dinojr"`
 	}
 )
 
+var (
+	testMessage = twilio.Message{
+		Sid:         "testsid",
+		DateCreated: time.Now().Format(time.RFC3339Nano),
+		DateUpdated: time.Now().Format(time.RFC3339Nano),
+		DateSent:    time.Now().Format(time.RFC3339Nano),
+		AccountSid:  "AC3TestAccount",
+		From:        "+15555555555",
+		To:          "+16666666666",
+		Body:        "BG=6.7 CHO=90 SA=10 LA=20",
+		NumSegments: "1",
+		Status:      "queued",
+		Direction:   "outbound-api",
+		Price:       "4",
+		PriceUnit:   "dollars",
+		ApiVersion:  "2008-04-01",
+		Uri:         "/2010-04-01/Accounts/AC3TestAccount/Messages/testsid.json",
+	}
+	testMessages = twilio.MessageList{
+		Messages: []twilio.Message{testMessage},
+	}
+)
+
+func loadMessages(smsClient twilio.Client) *twilio.MessageList {
+
+	if messages, err := twilio.GetMessageList(smsClient); err != nil {
+		log.Panic(err)
+		return nil
+	} else {
+		return messages
+	}
+
+}
+
 func main() {
+
 	var config Config
 
-	if err := common.LoadConfig([]string{"./config/env.json", "./config/server.json"}, &config); err != nil {
-		log.Panic("Problem loading config", err)
-	}
+	jsonConfig, _ := ioutil.ReadFile("./config/script.json")
+	_ = json.Unmarshal(jsonConfig, &config)
 
-	/*
-	 * Hakken setup
-	 */
-	hakkenClient := hakken.NewHakkenBuilder().
-		WithConfig(&config.HakkenConfig).
-		Build()
+	//smsClient := twilio.NewClient(config.User.AccountSid, config.User.AuthToken)
+	smsClient := new(twilio.MockClient)
 
-	if err := hakkenClient.Start(); err != nil {
-		log.Fatal(err)
-	}
-	defer hakkenClient.Close()
+	//mocking it!!!
+	messagesJson, _ := json.Marshal(testMessages)
+	smsClient.On("get", url.Values{}, smsClient.RootUrl()+"/SMS/Messages.json").Return(messagesJson, nil)
 
-	/*
-	 * Clients
-	 */
+	twilioMsgs := loadMessages(smsClient)
 
-	tc := twilio.NewClient(config.Api.TwilioAccountSid, config.Api.TwilioAuthToken)
-	pc := djrClients.NewPlatformClient()
-
-	/*
-	 * Shoreline setup
-	 */
-	rtr := mux.NewRouter()
-	api := api.InitApi(config.Api, tc, pc)
-	api.SetHandlers("", rtr)
-
-	/*
-	 * Serve it up and publish
-	 */
-	done := make(chan bool)
-	server := common.NewServer(&http.Server{
-		Addr:    config.Service.GetPort(),
-		Handler: rtr,
-	})
-
-	var start func() error
-	if config.Service.Scheme == "https" {
-		sslSpec := config.Service.GetSSLSpec()
-		start = func() error { return server.ListenAndServeTLS(sslSpec.CertFile, sslSpec.KeyFile) }
+	if platform, err := clients.NewClient(
+		config.Platform,
+		config.User.User,
+		config.User.Pw,
+	); err != nil {
+		//its all over!!
+		log.Panic(err)
 	} else {
-		start = func() error { return server.ListenAndServe() }
-	}
-	if err := start(); err != nil {
-		log.Fatal(err)
-	}
-
-	hakkenClient.Publish(&config.Service)
-
-	signals := make(chan os.Signal, 40)
-	signal.Notify(signals)
-	go func() {
-		for {
-			sig := <-signals
-			log.Printf("Got signal [%s]", sig)
-
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				server.Close()
-				done <- true
+		log.Println("yay logged in as ", config.User.User)
+		//load the data
+		if twilioMsgs != nil {
+			//log.Println("loading ... ", twilioMsgs)
+			if err := platform.LoadMessages(twilioMsgs); err != nil {
+				log.Println("Error pushing data to platform ", err)
 			}
 		}
-	}()
-
-	<-done
+	}
 
 }
