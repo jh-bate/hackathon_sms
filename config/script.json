@@ -2,8 +2,8 @@
   "dinojr" : {
     "accountSid" : "ADihSEI7tOQQP9xfXMO9HfRpXKu1NpIJ",
     "authToken" : "ADihSEI7tOQQP9xfXMO9HfRpXKu1NpIJ",
-    "user":"jb@tp.org",
-    "pw":"b4l"
+    "user":"jb",
+    "pw":"jb"
   },
   "platform" : {
     "auth":"http://localhost:8009/auth/login",

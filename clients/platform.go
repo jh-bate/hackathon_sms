@@ -19,6 +19,7 @@ type (
 		config     *Config
 		token      string
 		httpClient *http.Client
+		user       []map[string]string
 	}
 	Config struct {
 		Auth   string `json:"auth"`
@@ -54,7 +55,7 @@ func (tc *Client) login(usr, pw string) (token string, err error) {
 	}
 }
 
-func (tc *Client) LoadMessages(data *twilio.MessageList) error {
+func (tc *Client) LoadSmsMessages(data *twilio.MessageList) error {
 
 	for i := range data.Messages {
 		message := data.Messages[i]
@@ -83,5 +84,9 @@ func (tc *Client) LoadMessages(data *twilio.MessageList) error {
 		}
 	}
 
+	return nil
+}
+
+func (tc *Client) SendSmsMessage(string smsBody) error {
 	return nil
 }

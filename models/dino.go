@@ -1,28 +1,27 @@
 package models
 
 import (
+	"log"
 	"strconv"
 	"strings"
 )
 
 type (
+	//common fields for event
 	Common struct {
 		Type     string `json:"type"`
 		DeviceId string `json:"deviceId"`
 		Source   string `json:"source"`
 		Time     string `json:"time"`
 	}
-
 	BgEvent struct {
 		Common
 		Value float64 `json:"value"`
 	}
-
 	FoodEvent struct {
 		Common
 		Carbs float64 `json:"carbs"`
 	}
-
 	BasalEvent struct {
 		Common
 		DeliveryType string  `json:"deliveryType"`
@@ -44,37 +43,52 @@ type (
 )
 
 const (
-	BG    = "BG="
-	CARB  = "CHO="
-	BASAL = "SA="
-	BOLUS = "LA="
-	NOTE  = "NB="
-	MMOLL = "mmol/L"
+	TIME     = "T="
+	ACTIVITY = "A="
+	BG       = "B="
+	CARB     = "C="
+	BASAL    = "S="
+	BOLUS    = "L="
+	NOTE     = "N="
+	LOW      = "#L"
+	MMOLL    = "mmol/L"
 )
 
-func Translate(smsString string, date, device string) []interface{} {
+func Translate(smsMessage string, date, device string) []interface{} {
 
 	var events []interface{}
 
-	raw := strings.Split(smsString, " ")
+	raw := strings.Split(smsMessage, " ")
 
 outer:
 	for i := range raw {
 		switch {
-		case strings.Index(raw[i], BG) != -1:
+		case strings.Index(strings.ToUpper(raw[i]), BG) != -1:
 			events = append(events, makeBg(raw[i], date, device))
 			break
-		case strings.Index(raw[i], CARB) != -1:
+		case strings.Index(strings.ToUpper(raw[i]), CARB) != -1:
 			events = append(events, makeCarb(raw[i], date, device))
 			break
-		case strings.Index(raw[i], BASAL) != -1:
+		case strings.Index(strings.ToUpper(raw[i]), BASAL) != -1:
 			events = append(events, makeBasal(raw[i], date, device))
 			break
-		case strings.Index(raw[i], BOLUS) != -1:
+		case strings.Index(strings.ToUpper(raw[i]), BOLUS) != -1:
 			events = append(events, makeBolus(raw[i], date, device))
 			break
+		case strings.Index(strings.ToUpper(raw[i]), LOW) != -1:
+			//hard code 'LOW'
+			events = append(events, makeBg("B=3.9", date, device))
+			break
+		case strings.Index(strings.ToUpper(raw[i]), ACTIVITY) != -1:
+			//hard code 'LOW'
+			log.Panicln("Will be an activity ", raw[i])
+			break
+		case strings.Index(strings.ToUpper(raw[i]), NOTE) != -1:
+			//hard code 'LOW'
+			log.Panicln("Will be a note ", raw[i])
+			break
 		default:
-			events = append(events, makeNote(smsString, date, device))
+			log.Panicln("Will be a note ", smsMessage)
 			break outer
 		}
 	}
@@ -84,11 +98,13 @@ outer:
 func makeBg(bgString, date, device string) *BgEvent {
 	bg := strings.Split(bgString, BG)
 	bgVal, _ := strconv.ParseFloat(bg[1], 64)
+
 	return &BgEvent{Common: Common{Type: "smbg", DeviceId: device, Source: "dinojr", Time: date}, Value: bgVal}
 }
 
 func makeNote(noteString, date, device string) *Common {
-	return &Common{Type: "note", Source: "dinojr", DeviceId: device, Time: date}
+	return nil
+	//return &NoteEvent{Common: Common{Type: "note", Source: "dinojr", DeviceId: device, Time: date}, Text: noteString, CreatorId, ""}
 }
 
 func makeCarb(carbString, date, device string) *FoodEvent {

@@ -33,7 +33,7 @@ var (
 		AccountSid:  "AC3TestAccount",
 		From:        "+15555555555",
 		To:          "+16666666666",
-		Body:        "BG=6.7 CHO=90 SA=10 LA=20",
+		Body:        "B=6.7 C=90 S=10 L=20 #l",
 		NumSegments: "1",
 		Status:      "queued",
 		Direction:   "outbound-api",
@@ -51,6 +51,17 @@ func loadMessages(smsClient twilio.Client) *twilio.MessageList {
 
 	if messages, err := twilio.GetMessageList(smsClient); err != nil {
 		log.Panic(err)
+		return nil
+	} else {
+		return messages
+	}
+
+}
+
+func sendMessage(smsClient twilio.Client, frm, to, msg string) error {
+
+	if message, err := twilio.NewMessage(smsClient, frm, to, twilio.Body(msg)); err != nil {
+		log.Println(err)
 		return nil
 	} else {
 		return messages
@@ -86,7 +97,7 @@ func main() {
 		//load the data
 		if twilioMsgs != nil {
 			//log.Println("loading ... ", twilioMsgs)
-			if err := platform.LoadMessages(twilioMsgs); err != nil {
+			if err := platform.LoadSmsMessages(twilioMsgs); err != nil {
 				log.Println("Error pushing data to platform ", err)
 			}
 		}
