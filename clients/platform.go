@@ -15,6 +15,11 @@ const (
 )
 
 type (
+	Platform interface {
+		login(usr, pw string) (string, error)
+		LoadSmsMessages(data *twilio.MessageList) error
+		SendSmsMessage(smsBody string) error
+	}
 	Client struct {
 		config     *Config
 		token      string
@@ -87,6 +92,6 @@ func (tc *Client) LoadSmsMessages(data *twilio.MessageList) error {
 	return nil
 }
 
-func (tc *Client) SendSmsMessage(string smsBody) error {
+func (tc *Client) SendSmsMessage(smsBody string) error {
 	return nil
 }

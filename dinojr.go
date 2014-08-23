@@ -58,13 +58,13 @@ func loadMessages(smsClient twilio.Client) *twilio.MessageList {
 
 }
 
-func sendMessage(smsClient twilio.Client, frm, to, msg string) error {
+func sendMessage(smsClient twilio.Client, frm, to, msg string) (*twilio.Message, error) {
 
 	if message, err := twilio.NewMessage(smsClient, frm, to, twilio.Body(msg)); err != nil {
 		log.Println(err)
-		return nil
+		return message, nil
 	} else {
-		return messages
+		return message, nil
 	}
 
 }
