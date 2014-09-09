@@ -47,7 +47,7 @@ var (
 	}
 )
 
-func loadMessages(smsClient twilio.Client) *twilio.MessageList {
+func loadSmsMessages(smsClient twilio.Client) *twilio.MessageList {
 
 	if messages, err := twilio.GetMessageList(smsClient); err != nil {
 		log.Panic(err)
@@ -58,7 +58,7 @@ func loadMessages(smsClient twilio.Client) *twilio.MessageList {
 
 }
 
-func sendMessage(smsClient twilio.Client, frm, to, msg string) (*twilio.Message, error) {
+func sendSmsMessage(smsClient twilio.Client, frm, to, msg string) (*twilio.Message, error) {
 
 	if message, err := twilio.NewMessage(smsClient, frm, to, twilio.Body(msg)); err != nil {
 		log.Println(err)
@@ -83,7 +83,7 @@ func main() {
 	messagesJson, _ := json.Marshal(testMessages)
 	smsClient.On("get", url.Values{}, smsClient.RootUrl()+"/SMS/Messages.json").Return(messagesJson, nil)
 
-	twilioMsgs := loadMessages(smsClient)
+	twilioMsgs := loadSmsMessages(smsClient)
 
 	if platform, err := clients.NewClient(
 		config.Platform,

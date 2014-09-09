@@ -1,7 +1,7 @@
 package api
 
 import (
-	"./../clients"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -26,8 +26,9 @@ func InitApi(pf clients.Platform) *Api {
 }
 
 func (a *Api) SetHandlers(prefix string, rtr *mux.Router) {
-	rtr.Handle("/bolus/{userid}", varsHandler(a.GetBolus)).Methods("GET")
+	rtr.Handle("/bolus/{userid}", varsHandler(a.ClacBolus)).Methods("GET")
 	rtr.Handle("/iob/{userid}", varsHandler(a.GetIOB)).Methods("GET")
+	rtr.Handle("/isf/{userid}", varsHandler(a.CalcISF)).Methods("GET")
 }
 
 func (h varsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
@@ -35,7 +36,19 @@ func (h varsHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	h(res, req, vars)
 }
 
-func (a *Api) GetBolus(res http.ResponseWriter, req *http.Request, vars map[string]string) {
+func (a *Api) CalcISF(res http.ResponseWriter, req *http.Request, vars map[string]string) {
+
+	id := vars["userid"]
+	if id == "" {
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte(STATUS_NO_USR_DETAILS))
+		return
+	}
+	res.WriteHeader(http.StatusNotImplemented)
+	return
+}
+
+func (a *Api) ClacBolus(res http.ResponseWriter, req *http.Request, vars map[string]string) {
 
 	id := vars["userid"]
 	if id == "" {

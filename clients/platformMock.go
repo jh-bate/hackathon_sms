@@ -28,12 +28,12 @@ func (tc *MockClient) login(usr, pw string) (token string, err error) {
 	return "fairy.dust.as.a.token", nil
 }
 
-func (tc *MockClient) LoadSmsMessages(data *twilio.MessageList) error {
+func (tc *MockClient) HealthDataFromText(data *twilio.MessageList) error {
 	log.Println("loding sms messages into the platform")
 	return nil
 }
 
-func (tc *MockClient) SendSmsMessage(smsBody string) error {
-	log.Println("loding sms messages into the platform")
+func (tc *MockClient) AccountDataFromText(data *twilio.MessageList) error {
+	log.Println("loding account data for usr into the platform")
 	return nil
 }

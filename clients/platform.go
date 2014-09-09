@@ -19,6 +19,7 @@ type (
 		login(usr, pw string) (string, error)
 		LoadSmsMessages(data *twilio.MessageList) error
 		SendSmsMessage(smsBody string) error
+		GetDeviceEvents(userid string) ([]interface{}, error)
 	}
 	Client struct {
 		config     *Config
@@ -29,6 +30,7 @@ type (
 	Config struct {
 		Auth   string `json:"auth"`
 		Upload string `json:"upload"`
+		Acct   string `json:"acct"`
 	}
 )
 
@@ -60,12 +62,13 @@ func (tc *Client) login(usr, pw string) (token string, err error) {
 	}
 }
 
-func (tc *Client) LoadSmsMessages(data *twilio.MessageList) error {
+func (tc *Client) HealthDataFromText(data *twilio.MessageList) error {
 
 	for i := range data.Messages {
 		message := data.Messages[i]
 
-		block := models.Translate(message.Body, message.DateSent, message.From)
+		txt := models.NewHealthDataText(message.Body, message.DateSent, message.From)
+		block := txt.ParseHealthData()
 
 		jsonBlock, _ := json.Marshal(block)
 
@@ -92,6 +95,35 @@ func (tc *Client) LoadSmsMessages(data *twilio.MessageList) error {
 	return nil
 }
 
-func (tc *Client) SendSmsMessage(smsBody string) error {
+func (tc *Client) AccountDataFromText(data *twilio.MessageList) error {
+
+	for i := range data.Messages {
+		message := data.Messages[i]
+
+		txt := parse.NewAccountDataFromText(message.Body, message.DateSent, message.From)
+		block := txt.ParseAccountData()
+
+		jsonBlock, _ := json.Marshal(block)
+
+		log.Println(" account data to load ", bytes.NewBufferString(string(jsonBlock)))
+		//log.Println(" token ", tc.token)
+
+		/*req, _ := http.NewRequest("POST", tc.config.Acct, bytes.NewBufferString(string(jsonBlock)))
+		req.Header.Add(TP_SESSION_TOKEN, tc.token)
+		req.Header.Set("content-type", "application/json")
+
+		if resp, err := tc.httpClient.Do(req); err != nil {
+			log.Println("Error loading messages: ", err)
+			return err
+		} else {
+			log.Printf("all good? [%d] [%s] ", resp.StatusCode, resp.Status)
+			updatedToken := resp.Header.Get(TP_SESSION_TOKEN)
+			if updatedToken != "" && tc.token != updatedToken {
+				tc.token = updatedToken
+				log.Println("updated the token")
+			}
+		}*/
+	}
+
 	return nil
 }
